@@ -84,8 +84,48 @@ void *controller_thread(void *arg) {
       
         sem_post(&g_sem);
 
-        idx = (idx + 1) % NUM_LANES;   /* advance to next lane */
-        sleep_ms(300);                  /* brief gap between phases */
+        idx = (idx + 1) % NUM_LANES;   
+        sleep_ms(300);                  
+    }
+    return NULL;
+}
+
+ ════════════════════════════════════════════════════════════════════ */
+void *lane_thread(void *arg) {
+    int idx = *((int *)arg);
+    srand((unsigned int)time(NULL) + idx * 37); 
+    while (g_running) {
+
+        
+        pthread_mutex_lock(&g_mtx);
+        while (g_lanes[idx].signal != SIG_GREEN && g_running)
+            pthread_cond_wait(&g_cv, &g_mtx); 
+        pthread_mutex_unlock(&g_mtx);
+
+        if (!g_running) break;
+
+        
+        while (g_running) {
+            pthread_mutex_lock(&g_mtx);
+
+            
+            if (g_lanes[idx].signal != SIG_GREEN) {
+                pthread_mutex_unlock(&g_mtx);
+                break;
+            }
+
+           
+            int drain = (rand() % 2) + 1;
+            if (drain > g_lanes[idx].queue)
+                drain = g_lanes[idx].queue;
+
+            g_lanes[idx].queue   -= drain;  
+            g_lanes[idx].passed  += drain;  
+            g_total_passed       += drain;  
+
+            pthread_mutex_unlock(&g_mtx);
+            sleep_ms(600);  
+        }
     }
     return NULL;
 }
