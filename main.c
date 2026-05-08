@@ -210,6 +210,67 @@ static void draw(int W,int H){
     DrawText("Car in queue",  px+20, py, 13, LIGHTGRAY); py += 20;
     DrawRectangle(px+2, py+2, 18, 10, WHITE);
     DrawText("Ped crossing",  px+20, py, 13, LIGHTGRAY);
+}
 
+int main(){
+    //filling lanes with cars
+    for(int i=0 ;i<NUM_LANES;i++){
+        g_lanes[i].signal=SIG_RED;
+        g_lanes[i].queue=3+i;
+        g_lanes[i].passed=0;
 
+    }
+
+    sem_init(&g_sem,0,1); //intersection semaphore initialzied to 1
+
+    //7 worker threads
+    pthread_t threads[7];
+    static int idx[NUM_LANES]={0,1,2,3};
+
+    pthread_create(&threads[0],NULL,controller_thread,NULL);
+
+    for(int i=0 ;i<NUM_LANES ; i++){
+        pthread_create(&thread[i+1],NULL,lane_thread,(void *)&idx[i]);
+    }
+
+    pthread_create(&threads[5],NULL,vehicle_gen_thread,NULL);
+    pthread_create(&threads[6],NULL,pedestrian_thread,NULL);
+
+     printf("Traffic Simulator — 7 threads running\n");
+    printf("  controller_thread  : 1\n");
+    printf("  lane_thread        : 4 (N, E, S, W)\n");
+    printf("  vehicle_gen_thread : 1\n");
+    printf("  pedestrian_thread  : 1\n");
+    printf("Close the window or press ESC to exit.\n\n");
+
+    int W=1050,H=560;
+    InitWindow(W,H,"Traffic Signal Controller");
+    SetTargetFPS(30);
+
+    while(!WindowShouldClose()){
+        BeginDrawing();
+            draw(W,H);
+        EndDrawing();
+    }
+
+    CloseWindow();
+    
+    //shutiing down
+    pthread_mutex_lock(&g_mtx);
+    g_running=0;
+    pthread_cond_broadcast(&g_cv);
+    pthread_mutex_unlock(&g_mtx);
+
+    sem_post(&g_sem);
+
+    for (int i = 0; i < 7; i++){
+        pthread_join(threads[i], NULL);
+    }
+
+    sem_destroy(&g_sem);
+    pthread_mutex_destroy(&g_mtx);
+    pthread_cond_destroy(&g_cv);
+
+    printf("All threads joined. Exiting cleanly.\n");
+    return 0;
 }
