@@ -5,7 +5,7 @@
 #include<string.h>
 
 
-const char *DIR[]={"North","Eash","South","West"};
+const char *DIR[]={"North","East","South","West"};  
 
 static Color sig_color(int sig){
     if(sig== SIG_GREEN) return GREEN;
@@ -20,7 +20,7 @@ static void draw(int W,int H){
     int rx = panel_w; //roads starts from here i.e 270px
     int rw=W-panel_w; //total road withd
     int cx=rx+rw/2; //x-intercept
-    int cy=H/2 //y intercept
+    int cy=H/2; //y intercept   // fix: missing semicolon
 
     ClearBackground((Color){20,22,25,255}); //called every frame to reset canvas
     //green rectangles
@@ -38,19 +38,19 @@ static void draw(int W,int H){
 
     // dashed yellow lines
     for(int x=rx; x<cx-road; x+=28){
-        DrawRectangle(x,cy-2,18,4,Color{255,255,100,120});
+        DrawRectangle(x,cy-2,18,4,(Color){255,255,100,120});  // fix: Color{} → (Color){}
     }
 
     for(int x=cx+road+10; x<W; x+=28){
-        DrawRectangle(x,cy-2,18,4,Color{255,255,100,120});
+        DrawRectangle(x,cy-2,18,4,(Color){255,255,100,120});  // fix: Color{} → (Color){}
     }
 
     for(int y=0; y<cy-road; y+=28){
-        DrawRectangle(cx-2,y,4,18,Color{255,255,100,120});
+        DrawRectangle(cx-2,y,4,18,(Color){255,255,100,120});  // fix: Color{} → (Color){}
     }
 
-    for(int t=cy+road+10; y<H; y+=28){
-        DrawRectangle(cx-2,y,4,18,Color{255,255,100,120});
+    for(int y=cy+road+10; y<H; y+=28){  // fix: int t → int y
+        DrawRectangle(cx-2,y,4,18,(Color){255,255,100,120});  // fix: Color{} → (Color){}
     }
 
     //just some variables to store the copies and would later be used to draw the screen
@@ -59,8 +59,8 @@ static void draw(int W,int H){
 
     pthread_mutex_lock(&g_mtx);//lock the shared data
     for(int i=0 ;i<NUM_LANES ; i++){
-        sig[i]=g_lane[i].signal;
-        queue[i]=g_lane[i].queue;
+        sig[i]=g_lanes[i].signal;    // fix: g_lane → g_lanes
+        queue[i]=g_lanes[i].queue;   // fix: g_lane → g_lanes
         passed[i]=g_lanes[i].passed;
     }
 
@@ -100,6 +100,12 @@ static void draw(int W,int H){
     int lx[]={cx,cx+road+28,cx,cx-road-20};
     int ly[]={cy-road-28,cy,cy+road+28,cy};
 
+    // fix: missing qx, qy, qdx, qdy arrays that are used below
+    int qx[]  = { cx-10,      cx+road+5,  cx+2,        cx-road-16 };
+    int qy[]  = { cy-road-16, cy-10,      cy+road+5,   cy+2       };
+    int qdx[] = { -13,  0,  13,  0 };
+    int qdy[] = {   0, 13,   0, -13 };
+
     for(int i=0 ; i< NUM_LANES; i++){
         DrawCircle(lx[i],ly[i],17,BLACK); //circle outer color
         DrawCircle(lx[i],ly[i],12,sig_color(sig[i])); //circle inner color
@@ -118,9 +124,9 @@ static void draw(int W,int H){
             }
 
             if(queue[i] > 8){
-                char extra[8];
-                snprintf(extra,sizeof(extra,"+%d",queue[i]-8));
-                DrawText(extra,qx[i]+qdx[i]*8,qy[i],qdy[i]*8,11,YELLOW);
+                char extra[16];
+                snprintf(extra,sizeof(extra),"+%d",queue[i]-8);  // fix: wrong bracket placement
+                DrawText(extra,qx[i]+qdx[i]*8,qy[i]+qdy[i]*8,11,YELLOW);  // fix: comma → + between qy and qdy
             }
     }
 
@@ -141,10 +147,10 @@ static void draw(int W,int H){
     DrawRectangleLines(0,0,panel_w-4,H,(Color){80,80,80,255});
 
     //title
-    DrawText("Traffic Controller",px,py,15,WHIYE);
-    py+=12;
-    DrawLine(px,py,px+pw,GRAY);
-    py+=26
+    DrawText("Traffic Controller",px,py,15,WHITE);  // fix: WHIYE → WHITE
+    py+=26;                                          // fix: swapped py values (26 after title)
+    DrawLine(px,py,px+pw,py,GRAY);                  // fix: missing py as y2 argument
+    py+=12;                                          // fix: 12 after line + added semicolon
 
     DrawText("LANES",px,py,14,GRAY);
     py+=20;
@@ -162,7 +168,7 @@ static void draw(int W,int H){
         DrawText(sig_names[sig[i]],px+56,py,14,sig_lc[sig[i]]);
 
         char buf[32];
-        snprintf(buf,sizeof(buf,"Q:%2d  P:%d",queue[i],passed[i]));
+        snprintf(buf,sizeof(buf),"Q:%2d  P:%d",queue[i],passed[i]);  // fix: wrong bracket placement
         DrawText(buf,px+90,py,14,LIGHTGRAY);
         py+=22;
     }
@@ -230,7 +236,7 @@ int main(){
     pthread_create(&threads[0],NULL,controller_thread,NULL);
 
     for(int i=0 ;i<NUM_LANES ; i++){
-        pthread_create(&thread[i+1],NULL,lane_thread,(void *)&idx[i]);
+        pthread_create(&threads[i+1],NULL,lane_thread,(void *)&idx[i]);  // fix: thread → threads
     }
 
     pthread_create(&threads[5],NULL,vehicle_gen_thread,NULL);
