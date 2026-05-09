@@ -90,7 +90,7 @@ void *controller_thread(void *arg) {
     return NULL;
 }
 
- ════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════ */
 void *lane_thread(void *arg) {
     int idx = *((int *)arg);
     srand((unsigned int)time(NULL) + idx * 37); 
