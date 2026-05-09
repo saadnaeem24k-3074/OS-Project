@@ -122,9 +122,155 @@ static void draw(int W,int H){
                 snprintf(extra,sizeof(extra,"+%d",queue[i]-8));
                 DrawText(extra,qx[i]+qdx[i]*8,qy[i],qdy[i]*8,11,YELLOW);
             }
-
-        
     }
 
+    //labesl
+    DrawText("N", cx-6,  14,    18, LIGHTGRAY);
+    DrawText("S", cx-6,  H-22,  18, LIGHTGRAY);
+    DrawText("W", rx+8,  cy-9,  18, LIGHTGRAY);
+    DrawText("E", W-22,  cy-9,  18, LIGHTGRAY);
 
+
+    //stats panle
+    int px=10;
+    int py=10;
+    int pw=panel_w-14;
+
+    //background
+    DrawRectangle(0,0,panel_w-4,H,(Color){30,32,36,255});
+    DrawRectangleLines(0,0,panel_w-4,H,(Color){80,80,80,255});
+
+    //title
+    DrawText("Traffic Controller",px,py,15,WHIYE);
+    py+=12;
+    DrawLine(px,py,px+pw,GRAY);
+    py+=26
+
+    DrawText("LANES",px,py,14,GRAY);
+    py+=20;
+
+    //used to convert signal number into text
+    const char *sig_names[]={"RED","YLW","GRN"};
+    Color sig_lc[] = { RED, YELLOW, GREEN };
+
+    for(int i=0 ;i<NUM_LANES;i++){
+        if(sig[i]==SIG_GREEN){
+            DrawRectangle(px-4,py-2,pw,20,(Color){0,60,0,180});
+        }
+
+        DrawText(DIR[i],px,py,14,LIGHTGRAY);
+        DrawText(sig_names[sig[i]],px+56,py,14,sig_lc[sig[i]]);
+
+        char buf[32];
+        snprintf(buf,sizeof(buf,"Q:%2d  P:%d",queue[i],passed[i]));
+        DrawText(buf,px+90,py,14,LIGHTGRAY);
+        py+=22;
+    }
+
+    py+=8;
+    DrawLine(px,py,px+pw,py,GRAY);
+    py+=12;
+    
+    DrawText("STATISTICS",px,py,14,LIGHTGRAY);
+    py+=20;
+
+    //prints stats
+    char buf[64];
+    snprintf(buf, sizeof(buf), "Total passed : %d", total);
+    DrawText(buf, px, py, 14, LIGHTGRAY);
+     py += 20;
+
+    snprintf(buf, sizeof(buf), "Signal cycles: %d", cycles);
+    DrawText(buf, px, py, 14, LIGHTGRAY); 
+    py += 20;
+
+    snprintf(buf, sizeof(buf), "Ped crossings: %d", ped_count);
+    DrawText(buf, px, py, 14, LIGHTGRAY); 
+    py += 20;
+
+    //check if peds line on!
+    if (ped_on) {
+        DrawRectangle(px-4, py, pw, 22, (Color){180,0,0,200});
+        DrawText("PEDESTRIAN CROSSING!", px, py+4, 14, WHITE);
+        py += 26;
+    }
+
+    py += 8;
+    DrawLine(px, py, px+pw, py, GRAY); py += 12;
+
+    //color legend
+    DrawText("LEGEND", px, py, 14, GRAY); py += 18;
+    DrawCircle(px+8, py+7, 7, GREEN);
+    DrawText("Green signal",  px+20, py, 13, LIGHTGRAY); py += 20;
+    DrawCircle(px+8, py+7, 7, YELLOW);
+    DrawText("Yellow signal", px+20, py, 13, LIGHTGRAY); py += 20;
+    DrawCircle(px+8, py+7, 7, RED);
+    DrawText("Red signal",    px+20, py, 13, LIGHTGRAY); py += 20;
+    DrawRectangle(px+2, py+2, 11, 11, SKYBLUE);
+    DrawText("Car in queue",  px+20, py, 13, LIGHTGRAY); py += 20;
+    DrawRectangle(px+2, py+2, 18, 10, WHITE);
+    DrawText("Ped crossing",  px+20, py, 13, LIGHTGRAY);
+}
+
+int main(){
+    //filling lanes with cars
+    for(int i=0 ;i<NUM_LANES;i++){
+        g_lanes[i].signal=SIG_RED;
+        g_lanes[i].queue=3+i;
+        g_lanes[i].passed=0;
+
+    }
+
+    sem_init(&g_sem,0,1); //intersection semaphore initialzied to 1
+
+    //7 worker threads
+    pthread_t threads[7];
+    static int idx[NUM_LANES]={0,1,2,3};
+
+    pthread_create(&threads[0],NULL,controller_thread,NULL);
+
+    for(int i=0 ;i<NUM_LANES ; i++){
+        pthread_create(&thread[i+1],NULL,lane_thread,(void *)&idx[i]);
+    }
+
+    pthread_create(&threads[5],NULL,vehicle_gen_thread,NULL);
+    pthread_create(&threads[6],NULL,pedestrian_thread,NULL);
+
+     printf("Traffic Simulator — 7 threads running\n");
+    printf("  controller_thread  : 1\n");
+    printf("  lane_thread        : 4 (N, E, S, W)\n");
+    printf("  vehicle_gen_thread : 1\n");
+    printf("  pedestrian_thread  : 1\n");
+    printf("Close the window or press ESC to exit.\n\n");
+
+    int W=1050,H=560;
+    InitWindow(W,H,"Traffic Signal Controller");
+    SetTargetFPS(30);
+
+    while(!WindowShouldClose()){
+        BeginDrawing();
+            draw(W,H);
+        EndDrawing();
+    }
+
+    CloseWindow();
+    
+    //shutiing down
+    pthread_mutex_lock(&g_mtx);
+    g_running=0;
+    pthread_cond_broadcast(&g_cv);
+    pthread_mutex_unlock(&g_mtx);
+
+    sem_post(&g_sem);
+
+    for (int i = 0; i < 7; i++){
+        pthread_join(threads[i], NULL);
+    }
+
+    sem_destroy(&g_sem);
+    pthread_mutex_destroy(&g_mtx);
+    pthread_cond_destroy(&g_cv);
+
+    printf("All threads joined. Exiting cleanly.\n");
+    return 0;
 }
