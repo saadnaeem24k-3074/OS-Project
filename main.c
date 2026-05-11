@@ -20,7 +20,7 @@ static void draw(int W,int H){
     int rx = panel_w; //roads starts from here i.e 270px
     int rw=W-panel_w; //total road withd
     int cx=rx+rw/2; //x-intercept
-    int cy=H/2; //y intercept   // fix: missing semicolon
+    int cy=H/2; //y intercept  
 
     ClearBackground((Color){20,22,25,255}); //called every frame to reset canvas
     //green rectangles
@@ -38,19 +38,19 @@ static void draw(int W,int H){
 
     // dashed yellow lines
     for(int x=rx; x<cx-road; x+=28){
-        DrawRectangle(x,cy-2,18,4,(Color){255,255,100,120});  // fix: Color{} → (Color){}
+        DrawRectangle(x,cy-2,18,4,(Color){255,255,100,120}); 
     }
 
     for(int x=cx+road+10; x<W; x+=28){
-        DrawRectangle(x,cy-2,18,4,(Color){255,255,100,120});  // fix: Color{} → (Color){}
+        DrawRectangle(x,cy-2,18,4,(Color){255,255,100,120});  
     }
 
     for(int y=0; y<cy-road; y+=28){
-        DrawRectangle(cx-2,y,4,18,(Color){255,255,100,120});  // fix: Color{} → (Color){}
+        DrawRectangle(cx-2,y,4,18,(Color){255,255,100,120}); 
     }
 
     for(int y=cy+road+10; y<H; y+=28){  // fix: int t → int y
-        DrawRectangle(cx-2,y,4,18,(Color){255,255,100,120});  // fix: Color{} → (Color){}
+        DrawRectangle(cx-2,y,4,18,(Color){255,255,100,120});  
     }
 
     //just some variables to store the copies and would later be used to draw the screen
@@ -125,8 +125,8 @@ static void draw(int W,int H){
 
             if(queue[i] > 8){
                 char extra[16];
-                snprintf(extra,sizeof(extra),"+%d",queue[i]-8);  // fix: wrong bracket placement
-                DrawText(extra,qx[i]+qdx[i]*8,qy[i]+qdy[i]*8,11,YELLOW);  // fix: comma → + between qy and qdy
+                snprintf(extra,sizeof(extra),"+%d",queue[i]-8);  
+                DrawText(extra,qx[i]+qdx[i]*8,qy[i]+qdy[i]*8,11,YELLOW);  
             }
     }
 
@@ -147,10 +147,10 @@ static void draw(int W,int H){
     DrawRectangleLines(0,0,panel_w-4,H,(Color){80,80,80,255});
 
     //title
-    DrawText("Traffic Controller",px,py,15,WHITE);  // fix: WHIYE → WHITE
-    py+=26;                                          // fix: swapped py values (26 after title)
-    DrawLine(px,py,px+pw,py,GRAY);                  // fix: missing py as y2 argument
-    py+=12;                                          // fix: 12 after line + added semicolon
+    DrawText("Traffic Controller",px,py,15,WHITE);  
+    py+=26;                                          
+    DrawLine(px,py,px+pw,py,GRAY);                  
+    py+=12;                                          
 
     DrawText("LANES",px,py,14,GRAY);
     py+=20;
@@ -168,7 +168,7 @@ static void draw(int W,int H){
         DrawText(sig_names[sig[i]],px+56,py,14,sig_lc[sig[i]]);
 
         char buf[32];
-        snprintf(buf,sizeof(buf),"Q:%2d  P:%d",queue[i],passed[i]);  // fix: wrong bracket placement
+        snprintf(buf,sizeof(buf),"Q:%2d  P:%d",queue[i],passed[i]);  
         DrawText(buf,px+90,py,14,LIGHTGRAY);
         py+=22;
     }
@@ -205,15 +205,20 @@ static void draw(int W,int H){
     DrawLine(px, py, px+pw, py, GRAY); py += 12;
 
     //color legend
-    DrawText("LEGEND", px, py, 14, GRAY); py += 18;
+    DrawText("LEGEND", px, py, 14, GRAY);
+    py += 18;
     DrawCircle(px+8, py+7, 7, GREEN);
-    DrawText("Green signal",  px+20, py, 13, LIGHTGRAY); py += 20;
+    DrawText("Green signal",  px+20, py, 13, LIGHTGRAY);
+    py += 20;
     DrawCircle(px+8, py+7, 7, YELLOW);
-    DrawText("Yellow signal", px+20, py, 13, LIGHTGRAY); py += 20;
+    DrawText("Yellow signal", px+20, py, 13, LIGHTGRAY);
+    py += 20;
     DrawCircle(px+8, py+7, 7, RED);
-    DrawText("Red signal",    px+20, py, 13, LIGHTGRAY); py += 20;
+    DrawText("Red signal",    px+20, py, 13, LIGHTGRAY);
+    py += 20;
     DrawRectangle(px+2, py+2, 11, 11, SKYBLUE);
-    DrawText("Car in queue",  px+20, py, 13, LIGHTGRAY); py += 20;
+    DrawText("Car in queue",  px+20, py, 13, LIGHTGRAY);
+    py += 20;
     DrawRectangle(px+2, py+2, 18, 10, WHITE);
     DrawText("Ped crossing",  px+20, py, 13, LIGHTGRAY);
 }
